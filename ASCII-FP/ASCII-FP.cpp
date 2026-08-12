@@ -66,13 +66,13 @@ int main()
 		float fdeltaTime = d_deltaTime.count(); // Get the time inbetween in floating point
 
 		// Player Controls
+		// 
 		// ROTATION
-
-		if(GetAsyncKeyState((unsigned short)'A') & 0x8000) // Rotation counter clockwise
+		if(GetAsyncKeyState((unsigned short)'Q') & 0x8000) // Rotation counter clockwise
 		{
 			fPlayerA -= (rotationSpeed * fdeltaTime);
 		}
-		else if(GetAsyncKeyState((unsigned short)'D') & 0x8000) // Rotation clockwise
+		else if(GetAsyncKeyState((unsigned short)'E') & 0x8000) // Rotation clockwise
 		{
 			fPlayerA += (rotationSpeed * fdeltaTime);
 		}
@@ -80,6 +80,7 @@ int main()
 		// MOVEMENT
 		if (GetAsyncKeyState((unsigned short)'W') & 0x8000) // Forwards movement
 		{
+			// Calculating how much speed is applied to each axis
 			fPlayerX += sinf(fPlayerA) * movementSpeed * fdeltaTime;
 			fPlayerY += cosf(fPlayerA) * movementSpeed * fdeltaTime;
 
@@ -93,6 +94,7 @@ int main()
 		}
 		else if (GetAsyncKeyState((unsigned short)'S') & 0x8000) // Backwards movement
 		{
+			// Calculating how much speed is applied to each axis
 			fPlayerX -= sinf(fPlayerA) * movementSpeed * fdeltaTime;
 			fPlayerY -= cosf(fPlayerA) * movementSpeed * fdeltaTime;
 
@@ -102,6 +104,32 @@ int main()
 				fPlayerY += cosf(fPlayerA) * movementSpeed * fdeltaTime;
 			}
 		}
+
+		if (GetAsyncKeyState((unsigned short)'A') & 0x8000) // Left Movement
+		{
+			fPlayerX -= cosf(fPlayerA) * movementSpeed * fdeltaTime;
+			fPlayerY += sinf(fPlayerA) * movementSpeed * fdeltaTime;
+
+			// Collision deflection
+			if (map[(int)fPlayerY * _mapWidth + (int)fPlayerX] == '#')
+			{
+				fPlayerX += cosf(fPlayerA) * movementSpeed * fdeltaTime;
+				fPlayerY -= sinf(fPlayerA) * movementSpeed * fdeltaTime;
+			}
+		} 
+		else if(GetAsyncKeyState((unsigned short)'D') & 0x8000)
+		{
+			fPlayerX += cosf(fPlayerA) * movementSpeed * fdeltaTime;
+			fPlayerY -= sinf(fPlayerA) * movementSpeed * fdeltaTime;
+
+			// Collision deflection
+			if (map[(int)fPlayerY * _mapWidth + (int)fPlayerX] == '#')
+			{
+				fPlayerX -= cosf(fPlayerA) * movementSpeed * fdeltaTime;
+				fPlayerY += sinf(fPlayerA) * movementSpeed * fdeltaTime;
+			}
+		}
+
 
 
 		// Computation for each column of the screen along the X.
@@ -143,17 +171,19 @@ int main()
 			}
 
 			// Calculate the distance to ceiling and floor.
-			int ceiling = (float)(_screenHeight / 2.f) - _screenHeight / ((float)distanceToWall);
+			float correctedDistanceToWall = distanceToWall * cosf(fPlayerA - fRayAngle); // Stops fisheye effect
+
+			int ceiling = (float)(_screenHeight / 2.f) - _screenHeight / ((float)correctedDistanceToWall);
 			int floor = _screenHeight - ceiling;
 
 			short shade = ' ';
 
 			// Sade Calculation (From OneLoneCoder.com)
 
-			if (distanceToWall <= drawLimit / 4.0f) shade = 0x2588; // Directly in your face
-			else if (distanceToWall <= drawLimit / 3.0f) shade = 0x2593;
-			else if (distanceToWall <= drawLimit / 2.0f) shade = 0x2592;
-			else if (distanceToWall <= drawLimit) shade = 0x2591;
+			if (correctedDistanceToWall <= drawLimit / 4.0f) shade = 0x2588; // Directly in your face
+			else if (correctedDistanceToWall <= drawLimit / 3.0f) shade = 0x2593;
+			else if (correctedDistanceToWall <= drawLimit / 2.0f) shade = 0x2592;
+			else if (correctedDistanceToWall <= drawLimit) shade = 0x2591;
 			else shade = ' '; // Too far to render
 
 			for (int y = 0; y < _screenHeight; y++)
